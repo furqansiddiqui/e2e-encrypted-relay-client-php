@@ -28,13 +28,12 @@ class RelayCurlResponse
     {
         $headers = [];
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $line) use ($headers) {
+        curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $line) use (&$headers) {
             if (preg_match('/^[\w\-]+:/', $line)) {
                 $header = explode(':', $line, 2);
                 $name = trim(strval($header[0] ?? null));
                 $value = trim(strval($header[1] ?? null));
                 if ($name && $value) {
-                    /** @noinspection PhpArrayUsedOnlyForWriteInspection */
                     $headers[strtolower($name)] = $value;
                 }
             }

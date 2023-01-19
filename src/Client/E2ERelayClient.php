@@ -40,7 +40,7 @@ class E2ERelayClient extends AbstractE2ERelayNode
      */
     public function ping(): bool
     {
-        return $this->contactNode(null) === 202;
+        return $this->contactNode(null) === 204;
     }
 
     /**
@@ -49,7 +49,7 @@ class E2ERelayClient extends AbstractE2ERelayNode
      */
     public function handshake(): bool
     {
-        return $this->contactNode(base64_encode($this->encrypt(new RelayCurlRequest("handshake", "")))) === 204;
+        return $this->contactNode($this->encrypt(new RelayCurlRequest("handshake", ""))) === 202;
     }
 
     /**
@@ -69,7 +69,7 @@ class E2ERelayClient extends AbstractE2ERelayNode
      */
     public function send(RelayCurlRequest $req): RelayCurlResponse
     {
-        return $this->contactNode(base64_encode($this->encrypt($req)));
+        return $this->contactNode($this->encrypt($req));
     }
 
     /**
@@ -80,12 +80,11 @@ class E2ERelayClient extends AbstractE2ERelayNode
     private function contactNode(?string $encryptedRequest): int|RelayCurlResponse
     {
         $ch = curl_init("http://" . $this->ipAddress . ":" . $this->port);
-        if (isset($encrypted)) {
+        if (isset($encryptedRequest)) {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
             curl_setopt($ch, CURLOPT_POSTFIELDS, base64_encode($encryptedRequest));
         } else {
             curl_setopt($ch, CURLOPT_HTTPGET, 1);
-            curl_setopt($ch, CURLOPT_NOBODY, 1);
         }
 
         curl_setopt($ch, CURLOPT_USERAGENT, $this->defaultUserAgent);
@@ -109,7 +108,7 @@ class E2ERelayClient extends AbstractE2ERelayNode
         }
 
         if ($statusCode === 250) {
-            return $this->decrypt($response);
+            return $this->decrypt(base64_decode($response));
         }
 
         $ex = new RelayClientException("E2E encrypted proxy relay request failed");
