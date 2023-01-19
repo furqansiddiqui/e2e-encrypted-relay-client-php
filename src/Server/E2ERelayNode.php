@@ -136,6 +136,7 @@ class E2ERelayNode extends AbstractE2ERelayNode
         }
 
         http_response_code(250);
+        header("E2E-Response-Status-Code: " . $response->statusCode);
         exit(base64_encode($encrypted));
     }
 }

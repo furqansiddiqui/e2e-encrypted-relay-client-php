@@ -63,22 +63,30 @@ class E2ERelayClient extends AbstractE2ERelayNode
     }
 
     /**
+     * Proxy relay HTTP Request.
+     * Request is first encrypted and then sent to relay proxy node which in turn returns the encrypted Response using
+     * same shared secret. Decrypting of response can be made OPTIONAL by setting second argument to bool(TRUE) which
+     * will skip the decryption and only return HTTP status code of the relayed request.
+     *
      * @param \FurqanSiddiqui\E2ESecureRelay\RelayCurlRequest $req
-     * @return \FurqanSiddiqui\E2ESecureRelay\RelayCurlResponse
+     * @param bool $statusCodeOnly
+     * @return int|\FurqanSiddiqui\E2ESecureRelay\RelayCurlResponse
      * @throws \FurqanSiddiqui\E2ESecureRelay\Exception\E2ESecureRelayException
      */
-    public function send(RelayCurlRequest $req): RelayCurlResponse
+    public function send(RelayCurlRequest $req, bool $statusCodeOnly = false): int|RelayCurlResponse
     {
-        return $this->contactNode($this->encrypt($req));
+        return $this->contactNode($this->encrypt($req), $statusCodeOnly);
     }
 
     /**
      * @param string|null $encryptedRequest
+     * @param bool $returnStatusCode
      * @return int|\FurqanSiddiqui\E2ESecureRelay\RelayCurlResponse
      * @throws \FurqanSiddiqui\E2ESecureRelay\Exception\E2ESecureRelayException
      */
-    private function contactNode(?string $encryptedRequest): int|RelayCurlResponse
+    private function contactNode(?string $encryptedRequest, bool $returnStatusCode = false): int|RelayCurlResponse
     {
+        $fetchHeaders = $returnStatusCode;
         $ch = curl_init("http://" . $this->ipAddress . ":" . $this->port);
         if (isset($encryptedRequest)) {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
@@ -97,6 +105,22 @@ class E2ERelayClient extends AbstractE2ERelayNode
         }
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        if ($fetchHeaders) {
+            $headers = [];
+            curl_setopt($ch, CURLOPT_HEADERFUNCTION, function ($ch, $line) use (&$headers) {
+                if (preg_match('/^[\w\-]+:/', $line)) {
+                    $header = explode(':', $line, 2);
+                    $name = trim(strval($header[0] ?? null));
+                    $value = trim(strval($header[1] ?? null));
+                    if ($name && $value) {
+                        $headers[strtolower($name)] = $value;
+                    }
+                }
+
+                return strlen($line);
+            });
+        }
+
         $response = curl_exec($ch);
         if (false === $response) {
             throw RelayCurlException::CurlError($ch);
@@ -108,6 +132,10 @@ class E2ERelayClient extends AbstractE2ERelayNode
         }
 
         if ($statusCode === 250) {
+            if ($returnStatusCode && isset($headers)) {
+                return (int)$headers["e2e-response-status-code"];
+            }
+
             return $this->decrypt(base64_decode($response));
         }
 
