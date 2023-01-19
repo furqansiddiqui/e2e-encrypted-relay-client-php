@@ -68,11 +68,7 @@ class E2ERelayNode extends AbstractE2ERelayNode
             curl_setopt($ch, CURLOPT_HTTPGET, 1);
         } else {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtolower($req->method));
-            if ($req->body) {
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $req->body);
-            } else {
-                curl_setopt($ch, CURLOPT_NOBODY, true);
-            }
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $req->body);
         }
 
         if ($req->headers) {
