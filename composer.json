@@ -1,0 +1,28 @@
+{
+  "name": "furqansiddiqui/e2e-encrypted-relay-client-php",
+  "description": "End-to-end encrypted HTTP relay client for PHP apps",
+  "type": "library",
+  "homepage": "https://github.com/furqansiddiqui/e2e-encrypted-relay-client-php",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Furqan A. Siddiqui",
+      "email": "hello@furqansiddiqui.com",
+      "homepage": "https://www.furqansiddiqui.com",
+      "role": "Author"
+    }
+  ],
+  "require": {
+    "php": "^8.1",
+    "ext-openssl": "*",
+    "ext-curl": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "FurqanSiddiqui\\E2ESecureRelay\\": [
+        "src"
+      ]
+    }
+  },
+  "minimum-stability": "dev"
+}
